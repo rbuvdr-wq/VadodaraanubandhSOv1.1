@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vadodara Region Anubandh SO Dashboard</title>
+    <!-- Tailwind for layout, FontAwesome for icons, SheetJS for Excel export -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --silver: #C0C0C0;
+            --diamond: #FFFFFF;
+            --bg-dark: #0a0a0c;
+            --glass: rgba(255, 255, 255, 0.28); 
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --primary-text: #FFFFFF;
+            --secondary-text: #E5E5E5;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1a1a2e, #050505);
+            color: var(--primary-text);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        body.light-mode {
+            background: radial-gradient(circle at top right, #ffffff, #f0f0f0);
+            --glass: rgba(0, 0, 0, 0.12);
+            --glass-border: rgba(0, 0, 0, 0.2);
+            --primary-text: #000000;
+            --secondary-text: #1A1A1A;
+            color: var(--primary-text);
+        }
+
+        .luxury-title {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--glass-border);
+            border-radius: 1.25rem;
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.6);
+            padding: 1.25rem;
+        }
+
+        body.light-mode .glass-panel {
+            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            color: #FFF !important;
+        }
+        
+        body.light-mode .kpi-value { text-shadow: none; color: #000 !important; }
+
+        .info-value {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary-text);
+        }
+
+        .kpi-label {
+            font-size: 0.65rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #FFF !important;
+            opacity: 0.9;
+        }
+        body.light-mode .kpi-label { color: #000 !important; }
+
+        /* VIBRANT KPI CARDS */
+        .card-parcel { border-color: #3b82f6 !important; background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0.1)); box-shadow: 0 0 12px rgba(59, 130, 246, 0.3); }
+        .card-domestic { border-color: #a855f7 !important; background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(168, 85, 247, 0.1)); box-shadow: 0 0 12px rgba(168, 85, 247, 0.3); }
+        .card-intl { border-color: #ec4899 !important; background: linear-gradient(135deg, rgba(236, 72, 153, 0.35), rgba(236, 72, 153, 0.1)); box-shadow: 0 0 12px rgba(236, 72, 153, 0.3); }
+        .card-total { border-color: #f59e0b !important; background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(245, 158, 11, 0.1)); box-shadow: 0 0 12px rgba(245, 158, 11, 0.3); }
+        .card-posb { border-color: #10b981 !important; background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(16, 185, 129, 0.1)); box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+        .card-pli { border-color: #06b6d4 !important; background: linear-gradient(135deg, rgba(6, 182, 212, 0.35), rgba(6, 182, 212, 0.1)); box-shadow: 0 0 12px rgba(6, 182, 212, 0.3); }
+
+        .spinner-container { width: 44px; height: 44px; position: relative; }
+        .countdown-circle { transform: rotate(-90deg); }
+        .countdown-circle circle { fill: none; stroke-width: 4; stroke-dasharray: 126; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+
+        table thead th {
+            position: sticky;
+            top: 0;
+            background: #000;
+            z-index: 10;
+            color: #FFF;
+            font-weight: 900;
+            padding: 0.75rem;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+        }
+
+        body.light-mode table thead th { background: #1a1a1a; color: #FFF; }
+
+        .sticky-col { position: sticky; left: 0; z-index: 5; background: #0a0a0c !important; border-right: 2px solid var(--gold); }
+        body.light-mode .sticky-col { background: #ffffff !important; }
+
+        /* RAINBOW TABLE COLUMNS */
+        .col-group-1 { background-color: rgba(255, 235, 59, 0.18) !important; } 
+        .col-group-2 { background-color: rgba(233, 30, 99, 0.18) !important; }  
+        .col-group-3 { background-color: rgba(156, 39, 176, 0.18) !important; } 
+        .col-group-4 { background-color: rgba(33, 150, 243, 0.18) !important; } 
+        .col-group-5 { background-color: rgba(255, 152, 0, 0.18) !important; }  
+        .col-group-6 { background-color: rgba(76, 175, 80, 0.18) !important; }  
+
+        body.light-mode .col-group-1 { background-color: rgba(255, 235, 59, 0.35) !important; }
+        body.light-mode .col-group-2 { background-color: rgba(233, 30, 99, 0.35) !important; }
+        body.light-mode .col-group-3 { background-color: rgba(156, 39, 176, 0.35) !important; }
+        body.light-mode .col-group-4 { background-color: rgba(33, 150, 243, 0.35) !important; }
+        body.light-mode .col-group-5 { background-color: rgba(255, 152, 0, 0.35) !important; }
+        body.light-mode .col-group-6 { background-color: rgba(76, 175, 80, 0.35) !important; }
+
+        .mobile-optimized-view .patch-a-grid { grid-template-columns: 1fr !important; }
+        .mobile-optimized-view #info-grid, .mobile-optimized-view #target-grid { grid-template-columns: 1fr !important; }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header Section -->
+    <header class="flex flex-col lg:flex-row justify-between items-center mb-8 gap-6">
+        <div>
+            <h1 class="text-4xl md:text-5xl font-bold luxury-title tracking-tighter">VADODARA REGION</h1>
+            <p class="text-xs md:text-lg font-bold tracking-widest opacity-90 mt-1 uppercase text-[var(--secondary-text)]">Anubandh SO Performance Command Center</p>
+        </div>
+
+        <div class="flex items-center gap-6 glass-panel py-3 px-6">
+            <div class="flex items-center gap-4">
+                <div class="spinner-container">
+                    <svg class="countdown-circle" width="44" height="44">
+                        <circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,0.1)"></circle>
+                        <circle id="timer-progress" cx="22" cy="22" r="20" stroke="#FFD600"></circle>
+                    </svg>
+                    <div id="timer-text" class="absolute inset-0 flex items-center justify-center text-sm font-black">60</div>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-[9px] uppercase font-black opacity-70">Sync Status</span>
+                    <span id="sync-status" class="text-xs text-green-500 font-black">LIVE</span>
+                </div>
+            </div>
+
+            <div class="h-8 w-[2px] bg-white/20"></div>
+
+            <div class="flex gap-3">
+                <button id="theme-toggle" class="p-2.5 hover:bg-white/10 rounded-full transition-colors"><i class="fas fa-moon fa-lg"></i></button>
+                <button id="view-toggle" class="p-2.5 hover:bg-white/10 rounded-full transition-colors"><i class="fas fa-desktop fa-lg"></i></button>
+                <button id="export-full" class="p-2.5 hover:bg-white/10 rounded-full transition-colors text-yellow-400"><i class="fas fa-file-excel fa-lg"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="space-y-10">
+        
+        <!-- LOADER -->
+        <div id="loader" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl">
+            <div class="w-16 h-16 border-4 border-t-gold border-r-transparent border-b-silver border-l-transparent rounded-full animate-spin"></div>
+            <p class="mt-6 text-gold font-black text-xl tracking-[0.3em] animate-pulse uppercase">Refreshing Intelligence</p>
+        </div>
+
+        <!-- FILTERS -->
+        <section class="glass-panel">
+            <h2 class="text-xl font-black mb-4 flex items-center gap-3 uppercase border-b-2 border-gold/30 pb-2">
+                <i class="fas fa-filter text-gold"></i> Dynamic Filters
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="kpi-label mb-1 block">Division</label>
+                    <select id="filter-division" class="w-full bg-black/70 border border-white/20 rounded-lg p-3 font-bold text-white focus:border-gold outline-none text-sm">
+                        <option value="">All Divisions</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="kpi-label mb-1 block">Subdivision</label>
+                    <select id="filter-subdivision" disabled class="w-full bg-black/70 border border-white/20 rounded-lg p-3 font-bold text-white opacity-50 cursor-not-allowed text-sm">
+                        <option value="">Select Division First</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="kpi-label mb-1 block">Office Name</label>
+                    <select id="filter-office" disabled class="w-full bg-black/70 border border-white/20 rounded-lg p-3 font-bold text-white opacity-50 cursor-not-allowed text-sm">
+                        <option value="">Select Subdivision First</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART A: PERFORMANCE MATRIX -->
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-6 patch-a-grid">
+            <!-- Sub-Part 1: Office Info (OPTIMIZED SIZE) -->
+            <div class="glass-panel flex flex-col">
+                <h3 class="text-md font-black text-gold mb-4 uppercase flex items-center gap-2">
+                    <i class="fas fa-building text-sm"></i> Sub-Part 1: Office Info
+                </h3>
+                <div id="info-grid" class="grid grid-cols-2 lg:grid-cols-2 gap-2 flex-1"></div>
+            </div>
+
+            <!-- Sub-Part 2: Targets (OPTIMIZED SIZE) -->
+            <div class="glass-panel flex flex-col">
+                <h3 class="text-md font-black text-gold mb-4 uppercase flex items-center gap-2">
+                    <i class="fas fa-bullseye text-sm"></i> Sub-Part 2: Targets
+                </h3>
+                <div id="target-grid" class="grid grid-cols-2 gap-2 flex-1"></div>
+            </div>
+
+            <!-- Sub-Part 3: Achievement -->
+            <div class="glass-panel flex flex-col">
+                <h3 class="text-md font-black text-gold mb-4 uppercase flex items-center gap-2">
+                    <i class="fas fa-trophy text-sm"></i> Sub-Part 3: Achievement
+                </h3>
+                <div id="achievement-grid" class="grid grid-cols-1 gap-3 flex-1"></div>
+            </div>
+        </section>
+
+        <!-- PART B: PERFORMANCE DISTRIBUTION -->
+        <section class="glass-panel">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b-2 border-gold/30 pb-4">
+                <h2 class="text-xl font-black flex items-center gap-3 uppercase">
+                    <i class="fas fa-chart-line text-gold"></i> Achievement Brackets
+                </h2>
+                <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                    <select id="dist-division" class="bg-black/70 border border-white/20 rounded-lg p-2 font-bold text-xs outline-none">
+                        <option value="ALL">All Divisions</option>
+                    </select>
+                    <select id="dist-param" class="bg-black/70 border border-white/20 rounded-lg p-2 font-bold text-xs outline-none">
+                        <option value="Total_Revenue%">Total Revenue %</option>
+                        <option value="Parcel_Revenue%">Parcel Revenue %</option>
+                        <option value="Domestic_Mails_Revenue%">Domestic Mails %</option>
+                        <option value="Intl_Mail_Revenue%">Intl Mails %</option>
+                        <option value="POSB_NetAddition%">POSB %</option>
+                        <option value="PLI_RPLI_Initial_Prem%">PLI/RPLI %</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/10 uppercase font-black text-xs">
+                            <th class="p-4">Bracket Range</th>
+                            <th class="p-4 text-center">Office Count</th>
+                            <th class="p-4 text-right">Data Export</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dist-body" class="font-bold divide-y divide-white/5"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- PART C: DIVISION AGGREGATION MATRIX -->
+        <section class="glass-panel">
+            <div class="flex justify-between items-center mb-6 border-b-2 border-gold/30 pb-4">
+                <h2 class="text-xl font-black flex items-center gap-3 uppercase">
+                    <i class="fas fa-th text-gold"></i> Aggregation Matrix
+                </h2>
+                <button id="export-glance" class="bg-gold text-black font-black px-4 py-1.5 rounded-lg hover:scale-105 transition-transform uppercase text-[10px]">
+                    <i class="fas fa-download mr-1"></i> Export Matrix
+                </button>
+            </div>
+            <div class="data-table-container">
+                <table id="glance-table" class="w-full text-left border-collapse text-[10px]">
+                    <thead id="glance-head"></thead>
+                    <tbody id="glance-body" class="divide-y divide-white/5 font-black"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1u9R1ERVjHSYdusLWMqXCedmnoVMRU21FbaTOdECsx9U/gviz/tq?tqx=out:csv&sheet=AnubandhSO";
+        let rawData = [];
+        let filteredData = [];
+        let timer = 60;
+        let isDarkMode = true;
+        let isInitialLoad = true;
+        let isMobileView = false;
+
+        window.onload = async () => {
+            setupUIEvents();
+            setTimeout(() => { if (isInitialLoad) { document.getElementById('loader').style.display = 'none'; isInitialLoad = false; } }, 5000);
+            await fetchData();
+            startTimer();
+            initFilters();
+            renderDashboard();
+        };
+
+        async function fetchData() {
+            const syncStatus = document.getElementById('sync-status');
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvText = await response.text();
+                rawData = parseCSV(csvText);
+                if (isInitialLoad) filteredData = [...rawData];
+                populateDropdowns();
+                updateDivisionGlance();
+                if (syncStatus) { syncStatus.innerText = "LIVE"; syncStatus.className = "text-xs text-green-500 font-black"; }
+            } catch (error) {
+                if (syncStatus) { syncStatus.innerText = "OFFLINE"; syncStatus.className = "text-xs text-red-500 font-black"; }
+            } finally {
+                if (isInitialLoad) { document.getElementById('loader').style.display = 'none'; isInitialLoad = false; }
+            }
+        }
+
+        function parseCSV(csv) {
+            if (!csv) return [];
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+            return lines.slice(1).map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/"/g, '').trim());
+                let obj = {};
+                headers.forEach((h, i) => {
+                    const val = values[i];
+                    obj[h] = isNaN(val) || val === "" ? val : parseFloat(val);
+                });
+                return obj;
+            }).filter(row => row.Division);
+        }
+
+        function renderDashboard() {
+            const infoGrid = document.getElementById('info-grid');
+            const targetGrid = document.getElementById('target-grid');
+            const achievementGrid = document.getElementById('achievement-grid');
+            const active = filteredData.length === 1 ? filteredData[0] : aggregate(filteredData);
+
+            // Sub-Part 1: Office Info (Smaller Cards)
+            const infoFields = [
+                { label: 'Type', val: active.Office_Type || 'Agg' },
+                { label: 'Pincode', val: active.Pincode || 'Mixed' },
+                { label: 'Fac ID', val: active.Facility_ID || 'N/A' },
+                { label: 'ID', val: active.Office_ID || 'Agg' },
+                { label: 'Area', val: active.Rural_Urban || 'Mixed' },
+                { label: 'Class', val: active.Class || 'N/A' },
+                { label: 'Hands', val: active.office_hands_type || 'N/A' },
+                { label: 'A/C Office', val: active.accounting_office_name || 'N/A' }
+            ];
+            infoGrid.innerHTML = infoFields.map(f => `
+                <div class="bg-black/40 border border-white/10 rounded-md p-2 flex flex-col justify-center">
+                    <p class="kpi-label text-[8px] opacity-70">${f.label}</p>
+                    <p class="info-value text-xs truncate">${f.val}</p>
+                </div>
+            `).join('');
+
+            // Sub-Part 2: Targets (Smaller Cards)
+            const targetFields = [
+                { label: 'Parcel', val: active.Parcel_Target, isCurrency: true },
+                { label: 'Domestic', val: active.Domestic_Mails_Target, isCurrency: true },
+                { label: 'Intl', val: active.Intl_Mails_Target, isCurrency: true },
+                { label: 'Total', val: active.Total_PORev_Target, isCurrency: true },
+                { label: 'POSB', val: active.POSB_Target, isCurrency: false },
+                { label: 'PLI/RPLI', val: active.PLI_RPLI_Target, isCurrency: true }
+            ];
+            targetGrid.innerHTML = targetFields.map(f => `
+                <div class="bg-black/40 border border-white/10 rounded-md p-2 flex flex-col justify-center">
+                    <p class="kpi-label text-[8px] opacity-70">${f.label}</p>
+                    <p class="text-gold font-bold text-sm">${f.isCurrency ? '₹' : ''}${(f.val || 0).toLocaleString()}</p>
+                </div>
+            `).join('');
+
+            // Sub-Part 3: Achievement (CALCULATION FIXED)
+            const achGroups = [
+                { title: 'Parcel', revKey: 'Parcel_Revenue', targetKey: 'Parcel_Target', isCurrency: true, class: 'card-parcel' },
+                { title: 'Domestic Mails', revKey: 'Domestic_Mails_Revenue', targetKey: 'Domestic_Mails_Target', isCurrency: true, class: 'card-domestic' },
+                { title: 'International', revKey: 'Intl_Mail_Revenue', targetKey: 'Intl_Mails_Target', isCurrency: true, class: 'card-intl' },
+                { title: 'Total Revenue', revKey: 'Total_Revenue', targetKey: 'Total_PORev_Target', isCurrency: true, class: 'card-total' },
+                { title: 'POSB Net Add', revKey: 'POSB_NetAddition', targetKey: 'POSB_Target', isCurrency: false, class: 'card-posb' },
+                { title: 'PLI/RPLI Prem', revKey: 'PLI_RPLI_Initial_Prem', targetKey: 'PLI_RPLI_Target', isCurrency: true, class: 'card-pli' }
+            ];
+            achievementGrid.innerHTML = achGroups.map(g => {
+                const target = parseFloat(active[g.targetKey]) || 0;
+                const rev = parseFloat(active[g.revKey]) || 0;
+                const p = target > 0 ? (rev / target) * 100 : 0;
+                let statusIcon = p >= 100 ? 'fa-check-double' : (p >= 75 ? 'fa-arrow-trend-up' : (p >= 50 ? 'fa-minus' : 'fa-triangle-exclamation'));
+                return `
+                    <div class="border-2 rounded-lg p-3 transition-all hover:scale-[1.02] ${g.class}">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="kpi-label">${g.title}</span>
+                            <span class="font-black text-sm">${p.toFixed(1)}% <i class="fas ${statusIcon} ml-0.5"></i></span>
+                        </div>
+                        <p class="kpi-value text-lg">${g.isCurrency ? '₹' : ''}${rev.toLocaleString()}</p>
+                    </div>
+                `;
+            }).join('');
+
+            updateDistributionTable();
+        }
+
+        function aggregate(data) {
+            const res = {};
+            const keys = ['Parcel_Target', 'Domestic_Mails_Target', 'Intl_Mails_Target', 'Total_PORev_Target', 'POSB_Target', 'PLI_RPLI_Target',
+                          'Parcel_Revenue', 'Domestic_Mails_Revenue', 'Intl_Mail_Revenue', 'Total_Revenue', 'POSB_NetAddition', 'PLI_RPLI_Initial_Prem'];
+            keys.forEach(k => res[k] = data.reduce((sum, row) => sum + (parseFloat(row[k]) || 0), 0));
+            return res;
+        }
+
+        function updateDistributionTable() {
+            const div = document.getElementById('dist-division')?.value || 'ALL';
+            const param = document.getElementById('dist-param')?.value || 'Total_Revenue%';
+            const source = div === 'ALL' ? rawData : rawData.filter(r => r.Division === div);
+            const brackets = [
+                { label: '100% or more', filter: v => v >= 100, color: 'text-green-500' },
+                { label: '75 to 99%', filter: v => v >= 75 && v < 100, color: 'text-yellow-500' },
+                { label: '50 to 74%', filter: v => v >= 50 && v < 75, color: 'text-orange-500' },
+                { label: '25 to 49%', filter: v => v >= 25 && v < 50, color: 'text-red-500' },
+                { label: 'Less than 25%', filter: v => v < 25, color: 'text-red-700' }
+            ];
+            document.getElementById('dist-body').innerHTML = brackets.map(b => {
+                const matching = source.filter(r => {
+                    // Manual calculation for distribution based on param
+                    let tKey = '', rKey = '';
+                    if(param.includes('Total')) { tKey = 'Total_PORev_Target'; rKey = 'Total_Revenue'; }
+                    else if(param.includes('Parcel')) { tKey = 'Parcel_Target'; rKey = 'Parcel_Revenue'; }
+                    else if(param.includes('Domestic')) { tKey = 'Domestic_Mails_Target'; rKey = 'Domestic_Mails_Revenue'; }
+                    else if(param.includes('Intl')) { tKey = 'Intl_Mails_Target'; rKey = 'Intl_Mail_Revenue'; }
+                    else if(param.includes('POSB')) { tKey = 'POSB_Target'; rKey = 'POSB_NetAddition'; }
+                    else if(param.includes('PLI')) { tKey = 'PLI_RPLI_Target'; rKey = 'PLI_RPLI_Initial_Prem'; }
+                    
+                    const t = parseFloat(r[tKey]) || 0;
+                    const v = parseFloat(r[rKey]) || 0;
+                    const pct = t > 0 ? (v / t) * 100 : 0;
+                    return b.filter(pct);
+                });
+                return `
+                    <tr>
+                        <td class="p-4 font-black">${b.label}</td>
+                        <td class="p-4 text-center"><span class="px-4 py-1 rounded-full bg-black/50 ${b.color} font-black text-lg">${matching.length}</span></td>
+                        <td class="p-4 text-right">
+                            <button onclick='downloadBracketExcel("${b.label}", ${JSON.stringify(matching.map(m => m.Office_ID))})' class="text-gold font-black uppercase text-[10px]">
+                                <i class="fas fa-file-excel mr-1"></i> Export
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function downloadBracketExcel(label, ids) {
+            const subset = rawData.filter(r => ids.includes(r.Office_ID));
+            exportToExcel(subset, `Offices_${label.replace(/\s+/g, '_')}`);
+        }
+
+        function updateDivisionGlance() {
+            const divisions = [...new Set(rawData.map(r => r.Division))].sort();
+            const metrics = ['Parcel_Target', 'Parcel_Revenue', 'Domestic_Mails_Target', 'Domestic_Mails_Revenue', 'Intl_Mails_Target', 'Intl_Mail_Revenue', 'Total_PORev_Target', 'Total_Revenue', 'POSB_Target', 'POSB_NetAddition', 'PLI_RPLI_Target', 'PLI_RPLI_Initial_Prem'];
+            document.getElementById('glance-head').innerHTML = `<tr><th class="p-4 sticky-col">Division Name</th>${metrics.map((m, i) => `<th class="p-4 text-center min-w-[120px] col-group-${Math.floor(i / 2) + 1}">${m.replace(/_/g, ' ')}</th>`).join('')}</tr>`;
+            document.getElementById('glance-body').innerHTML = divisions.map(d => {
+                const divData = rawData.filter(r => r.Division === d);
+                return `<tr><td class="p-4 font-black sticky-col text-gold uppercase">${d}</td>${metrics.map((m, i) => `<td class="p-4 text-center font-black col-group-${Math.floor(i / 2) + 1}">${!(m.includes('POSB')) ? '₹' : ''}${divData.reduce((s, row) => s + (parseFloat(row[m]) || 0), 0).toLocaleString()}</td>`).join('')}</tr>`;
+            }).join('');
+        }
+
+        function populateDropdowns() {
+            const divSelect = document.getElementById('filter-division');
+            if (divSelect && divSelect.options.length <= 1) {
+                const divisions = [...new Set(rawData.map(r => r.Division))].sort();
+                divisions.forEach(d => {
+                    divSelect.innerHTML += `<option value="${d}">${d}</option>`;
+                    document.getElementById('dist-division').innerHTML += `<option value="${d}">${d}</option>`;
+                });
+            }
+        }
+
+        function populateSubdivisions(div) {
+            const subSelect = document.getElementById('filter-subdivision');
+            subSelect.innerHTML = '<option value="">All Subdivisions</option>';
+            if (!div) return;
+            const subs = [...new Set(rawData.filter(r => r.Division === div).map(r => r.Subdivision))].sort();
+            subs.forEach(s => subSelect.innerHTML += `<option value="${s}">${s}</option>`);
+        }
+
+        function populateOffices(div, sub) {
+            const offSelect = document.getElementById('filter-office');
+            offSelect.innerHTML = '<option value="">All Offices</option>';
+            if (!sub) return;
+            const offs = [...new Set(rawData.filter(r => r.Division === div && r.Subdivision === sub).map(r => r.Office_Name))].sort();
+            offs.forEach(o => offSelect.innerHTML += `<option value="${o}">${o}</option>`);
+        }
+
+        function applyHierarchicalFilter() {
+            const d = document.getElementById('filter-division').value;
+            const s = document.getElementById('filter-subdivision').value;
+            const o = document.getElementById('filter-office').value;
+            filteredData = rawData.filter(r => (!d || r.Division === d) && (!s || r.Subdivision === s) && (!o || r.Office_Name === o));
+            renderDashboard();
+        }
+
+        function startTimer() { setInterval(() => { timer--; if (timer < 0) { timer = 60; fetchData().then(() => renderDashboard()); } const t = document.getElementById('timer-text'); if(t) t.innerText = timer; const p = document.getElementById('timer-progress'); if(p) p.style.strokeDashoffset = 126 - (126 * timer) / 60; }, 1000); }
+        function exportToExcel(data, filename) { const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, `${filename}.xlsx`); }
+
+        function setupUIEvents() {
+            document.getElementById('theme-toggle').onclick = (e) => {
+                document.body.classList.toggle('light-mode');
+                isDarkMode = !isDarkMode;
+                e.currentTarget.innerHTML = isDarkMode ? '<i class="fas fa-moon fa-lg"></i>' : '<i class="fas fa-sun fa-lg"></i>';
+            };
+            document.getElementById('view-toggle').onclick = (e) => {
+                isMobileView = !isMobileView;
+                document.body.classList.toggle('mobile-optimized-view');
+                e.currentTarget.innerHTML = isMobileView ? '<i class="fas fa-mobile-alt fa-lg text-gold"></i>' : '<i class="fas fa-desktop fa-lg"></i>';
+            };
+            document.getElementById('export-full').onclick = () => exportToExcel(rawData, "Full_Vadodara_Dataset");
+            document.getElementById('export-glance').onclick = () => XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('glance-table')), "Division_Matrix.xlsx");
+        }
+
+        function initFilters() {
+            const ds = document.getElementById('filter-division');
+            const ss = document.getElementById('filter-subdivision');
+            const os = document.getElementById('filter-office');
+            ds.onchange = () => { ss.disabled = !ds.value; ss.style.opacity = ds.value ? "1" : "0.5"; populateSubdivisions(ds.value); applyHierarchicalFilter(); };
+            ss.onchange = () => { os.disabled = !ss.value; os.style.opacity = ss.value ? "1" : "0.5"; populateOffices(ds.value, ss.value); applyHierarchicalFilter(); };
+            os.onchange = applyHierarchicalFilter;
+        }
+    </script>
+</body>
+</html>
